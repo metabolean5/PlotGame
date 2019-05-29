@@ -57,7 +57,7 @@ class Game:
         self.playerNum = input("ENTER PLAYER NUMBER\n")
 
         for i in range(int(self.playerNum)):
-            self.players.append(Player(True,i))
+            self.players.append(Player(True,i,self))
 
         # Card distribution Phase
         self.shuffleNdistribute()
@@ -90,7 +90,7 @@ class Game:
 
             sys.stdout.write("\n NOW PLAYING : " + str(self.players[rrcount % len(self.players)]))
 
-            self.players[rrcount % len(self.players)].play(self)
+            self.players[rrcount % len(self.players)].play()
             rrcount += 1
 
 

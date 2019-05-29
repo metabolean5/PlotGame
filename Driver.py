@@ -13,3 +13,4 @@ game = Game()
 game.GameInit()
 game.MainGameLoop()
 
+print("end")
