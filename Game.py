@@ -69,11 +69,11 @@ class Game:
         # remove dead player
         for i in range(len(self.players)):
             if len(self.players[i].cards) < 1:
-                sys.stdout.write(str(self.players[i])  +  " is DEAD.\n")
+                sys.stdout.write("\n\n" + str(self.players[i])  +  " is DEAD.\n")
                 self.players.remove(self.players[i])
 
 
-        sys.stdout.write("\n Players still in game :\n")
+        sys.stdout.write("\n\n Players still in game :\n")
 
         # print player data
         for i in range(len(self.players)):
@@ -88,7 +88,7 @@ class Game:
 
             self.update()
 
-            sys.stdout.write("\n NOW PLAYING : " + str(self.players[rrcount % len(self.players)]))
+            sys.stdout.write("\n\n NOW PLAYING : " + str(self.players[rrcount % len(self.players)]))
 
             self.players[rrcount % len(self.players)].play()
             rrcount += 1
