@@ -1,10 +1,13 @@
 
 import sys
+from Card import Card
 
-
+CARDTYPES = ["Captain", "Duchess", "Comptess", "Assassin", "Inquisitor"]
 
 class Player:
 
+    VERIFICATORS = []
+    TMPLIE = ""
 
     def __init__(self, isCPU, id, game):
 
@@ -16,6 +19,8 @@ class Player:
         self.lieCount = 0
         self.game = game
 
+
+
     def __str__(self):
 
         return "\nPlayer " + str(self.pID) + "\tbifton: " + str(self.money) +  "\t(" + str(len(self.cards)) + " cards left)\n"
@@ -24,16 +29,30 @@ class Player:
     # Block card action of opponent
     def block(self,cardName):
 
-
         if cardName == "Captain":
 
             if self.hasCard("Captain") or self.hasCard("Inquisitor"):
                 sys.stdout.write("\n\nPlayer " + str(self.pID) + " blocks the Captain!")  # print to all
+
+                if self.hasCard("Captain") == "1":
+                    Player.TMPLIE = "Captain"
+                if self.hasCard("Inquisitor"):
+                    Player.TMPLIE = "Inquisitor"
+
+
                 return True
             else:
                 resp = input("\n\n Player" + str(self.pID)  + " : You do not have the counter card.  Lie ? (y/n)")
 
                 if resp == "y":
+
+                    resp2 = input("Choose lie : (1) Captain (2) Inquisitor")
+
+                    if resp2 == "1":
+                        Player.TMPLIE  = "Captain"
+                    else:
+                        Player.TMPLIE = "Inquisitor"
+
                     sys.stdout.write("Player " + str(self.pID)  + " blocks the Captain!")  # print to all
                     return True
                 else:
@@ -45,40 +64,38 @@ class Player:
         sys.stdout.write("\n\nPlayer " + str(self.pID) + " wants to steal from Player "
                          + str(self.game.players[targetNum].pID) )  # print to all
 
+
+        lie = self.allVerify("Captain")
+        if lie: return
+
+
         if self.game.players[targetNum].block("Captain"):
 
-            msg = "\n\nPlayer "+ str(self.pID) + " : Verify if Player " + str(self.game.players[targetNum]) + " has cards 'Captain' or 'Inquisitor'? (y/n) "
-            resp = input(msg)
+            lie = self.allVerify(Player.TMPLIE)
 
-            if resp == "y":
-                if self.game.players[targetNum].hasCard("Captain") or self.game.players[targetNum].hasCard("Inquisitor"):
-
-                    sys.stdout.write("\n\nPlayer " + str(self.pID) + " got FULL countered by Player "
-                                     +  str(self.game.players[targetNum].pID) + "and looses his Captain ")  # print to all
-
-                    self.looseCard("Captain")
-                    return
-                else:
-
-                    sys.stdout.write("\n\nPlayer " + str(self.game.players[targetNum].pID)
-                                     + " lied and got caught")  # print to all
-
-                    self.game.players[targetNum].chooseLooseCard()
-                    return
-            else:
+            if not lie:
                 sys.stdout.write("\n\nCounter success ! Player " + str(self.game.players[targetNum].pID)
                                  + " is safe\n ")  # print to all
                 return
 
-        else:
 
-            self.money += 2
-            self.game.players[targetNum].money -= 2
+        self.money += 2
+        self.game.players[targetNum].money -= 2
 
-            sys.stdout.write("\n\nPlayer " + str(self.pID)  + " steals 2 coins from Player  "
-                             + str(self.game.players[targetNum].pID) )  # print to all
+        sys.stdout.write("\n\nPlayer " + str(self.pID)  + " steals 2 coins from Player  "
+                        + str(self.game.players[targetNum].pID) )  # print to all
 
 
+
+    # Assasinate action from you know who
+    def ass_kill(self, targetNum):
+
+        sys.stdout.write("\n\nPlayer " + str(self.pID) + " wants to KILL Player "
+                         + str(self.game.players[targetNum].pID))  # print to all
+
+        lie = self.allVerify("Assassin")
+
+        # IMPLEMENT ACTION
 
 
     def action(self, choice):
@@ -94,26 +111,55 @@ class Player:
 
             self.cpt_steal(int(playerNum))
 
+        if choice == "Assassin":
+
+            sys.stdout.write("Player " + str(self.pID) + " plays the Assassin!")  # print to all
+
+            for i in range(len(self.game.players)):
+                sys.stdout.write("\n("+ str(i)+ ")" + str(self.game.players[i]))
+
+            playerNum = input("\n\nPlayer "+ str(self.pID) + " : Who would you like to kill? ")
+
+            self.ass_kill(int(playerNum))
 
 
     def play(self):
 
         tmpOption = []
-        honestOptions = "\n\nPlayer "+ str(self.pID) + " :   Options : \n"
+        lastCount = 0
+
+        # Load honest options
+        honestOptions = "\n\nPlayer "+ str(self.pID) + " : Honest  Options : \n"
         honestOptions += "(0) take 2 \t"
 
         for i in range(len(self.cards)):
-            tmpOption.append(self.cards[i])
+            tmpOption.append(str(self.cards[i]))
             honestOptions += "\t (" + str(i + 1) +  ") " + str(self.cards[i])
+            lastCount = i
 
 
-        honestOption = input(honestOptions)
+        # Load lying options
+        lieOptions = "\n\n Lying Options : \n"
 
-        if honestOption == "0":
+        i=1
+        for lieCard in CARDTYPES:
+            if lieCard not in tmpOption:
+                tmpOption.append(lieCard)
+                lieOptions += "\t (" + str(lastCount + i + 1) +  ") " + lieCard
+                i += 1
+
+
+        # Display all Options
+
+        options = honestOptions + lieOptions
+
+        option = input(options)
+
+        if option == "0":
             self.money += 2
             return
 
-        self.action(tmpOption[int(honestOption)-1].ctype)
+        self.action(tmpOption[int(option)-1])
 
 
 
@@ -152,6 +198,65 @@ class Player:
 
         sys.stdout.write("\nPlayer " + str(self.pID) + " looses a " + str(self.cards[int(resp)]))  # print to all
         self.cards.remove(self.cards[int(resp)])
+
+
+
+    def allVerify(self, cardName):
+
+        Player.VERIFICATORS = []
+        Player.VERIFYB = False
+
+        # All players get to say if they want to verify or not
+        for player in self.game.players:
+
+            if player == self:
+                continue
+
+            player.verify(cardName, self)
+
+
+        # Checks if somebody detected a lie
+        if Player.VERIFICATORS:
+            for ver in Player.VERIFICATORS:
+                sys.stdout.write("\nPlayer " + str(ver.pID) + " declares Player "
+                                 + str(self.pID) + " a liar !")  # print to all
+
+            if self.hasCard(cardName):
+                sys.stdout.write("\n\nPlayer " + str(self.pID) + " is NOT a liar !\n")  # print to all
+
+                for ver in Player.VERIFICATORS:
+                    sys.stdout.write("\nPlayer " + str(ver.pID) + " is a suspicious Linus...") # print to all
+                    ver.chooseLooseCard()
+                    return False
+
+            else:
+                sys.stdout.write("\n\nPlayer " + str(self.pID) + " is indeed a liar!\n")
+                self.looseCard(cardName)
+                return True
+
+        else:
+            sys.stdout.write("\n\nPlayer " + str(self.pID) + " seems honest" ) # print to all
+            return False
+
+
+
+
+
+
+
+    def verify(self, cardName,  opponent):
+
+        resp = input("\n\nPlayer " + str(self.pID) + " : do you want to verify if Player " +
+                     str(opponent.pID) + " has card '" + cardName + "' ? Declare liar ? (y/n)")
+
+        if resp == "y":
+            Player.VERIFICATORS.append(self)
+
+
+
+
+
+
 
 
 
